@@ -10,6 +10,12 @@ __all__ = ('enc_manager',)
 
 class EncManager:
 
+    async def dencrypt(self, bytes):
+        return AESDecrypt(self.enc_key, bytes)
+
+    async def checksum(self, hash, bytes):
+        return hmac_sha256(self.mac_key, bytes) == hash
+
     async def _generate_final_keys(self, secret):
         self.secret = base64.b64decode(secret)
         self.shared_secret = self.private.get_shared_key(

@@ -25,10 +25,10 @@ def message_as_json(message):
 
 class WhatsappWebsocket(object):
     """
-    this websocket only serves two things
-    send data and recv data
+    this websocket only serves 3 things
+    send data, recv data and keeping the connection alive
 
-    when he recv it or sending the data he sending it to the manager first
+    any recved message is sended to the manager that take care of the message
 
     the client is the one who is sending data so the client will interact with the websocket
     but the websocket wont interract with the client, the manager will 
@@ -40,13 +40,18 @@ class WhatsappWebsocket(object):
         self.loop = asyncio.get_event_loop()
         self.recv = self.loop.create_future()
         # the recv future is if someone want to listen for the icoming traffic 
-        # without interrupting the "listen loop" 
+        # without interrupting the "listen loop"
+
+        self._connected = False
+        self.closed = asyncio.Event(loop=self.loop)
 
     async def connect(self):
         """
         connecting to the whatsapp websocket and start listening for incoming data
         """
         self.socket = await websockets.connect(self.uri, origin=self.origin)
+
+        self.loop.create_task(self.keep_connection_alive())
         self.loop.create_task(self.listen())
 
     async def listen(self):
@@ -67,7 +72,7 @@ class WhatsappWebsocket(object):
                 message = await client.recv
                 print(message)
         """
-        while True:
+        while not self.closed.is_set():
             if self.recv.done():
                 self.recv = self.loop.create_future()
             
@@ -83,6 +88,16 @@ class WhatsappWebsocket(object):
 
         m = message_as_json(message)
         await self.socket.send(m)
+
+    async def keep_connection_alive(self):
+        while not self.closed.is_set():
+            try: # if no message recv the next 25 sec send a dummy message to keep it alive
+                await asyncio.wait_for(
+                    asyncio.shield(self.recv), 25, loop=self.loop
+                )
+            except asyncio.TimeoutError:
+                await self.socket.send('?,,')
+
 
     def __await__(self):
         return self.connect().__await__()

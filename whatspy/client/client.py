@@ -5,13 +5,19 @@ import base64
 import asyncio
 import logging
 
-from .utils import generate_qr
+from .utils import generate_qr, remove_qr
 from ..messages import init_message, reref, MessageIdentifiers
 from ..websockets.websocket import WhatsappWebsocket
 from ..encryption.manager   import enc_manager
 
 
 class Client:
+    """
+    the client responsable to make
+    a friendly "interface" with the user, the client need
+    to take care of the authentication process and all of the messages
+    that needed to be sended to the whatsapp websocket
+    """
     _instance = None
 
     def __init__(self, loop=None):
@@ -50,7 +56,7 @@ class Client:
             return
 
         time = re.compile(*MessageIdentifiers.TIME)
-        s = re.compile(*MessageIdentifiers.S)
+        s    = re.compile(*MessageIdentifiers.S)
 
         while (not self.token) or (not self.server_token):
             try:
@@ -61,7 +67,7 @@ class Client:
                 await self._request_reref()
                 continue
 
-            if isinstance(response, bytes): # nothing useful 4 now
+            if isinstance(response, bytes): # nothing useful 4 this authtication
                 continue
 
             tag, content = response.split(',', 1)
@@ -77,8 +83,10 @@ class Client:
             
             if s.match(tag):
                 type = as_python[0].lower()
+
                 if type == 'conn':
                     await self._get_connection_info(as_python[1])
+        remove_qr()
 
     async def _request_reref(self):
         await self.wb.send(reref())

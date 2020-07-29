@@ -48,13 +48,10 @@ def restore_session(token, server_token, client_id):
     return (MessageTags.TIME, payload)
 
 def disconnect_session():
+    tag = lambda : 'goodbye,'
     payload = [
         'admin',
         'Conn',
         'disconnect'
     ]
-    tag = lambda : 'goodbye,'
     return (tag, payload)
-
-def alive():
-    return (int(time.time()), )
