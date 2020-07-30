@@ -1,5 +1,6 @@
 import curve25519
 import hashlib
+import asyncio
 import base64
 
 from .utils import *
@@ -9,6 +10,9 @@ __all__ = ('enc_manager',)
 
 
 class EncManager:
+    def __init__(self):
+        self._ready = asyncio.Event()
+        self.mac_key = None
 
     async def dencrypt(self, bytes):
         return AESDecrypt(self.enc_key, bytes)
@@ -34,14 +38,30 @@ class EncManager:
 
         self.enc_key = denc_key[:32]
         self.mac_key = denc_key[32:64]
+        self._ready.set()
+
+    async def wait_to_be_ready(self):
+        return (await self._ready.wait())
+
+    def sign(self, data): # used for challenge
+        return hmac_sha256(self.mac_key, data)
 
     def _is_final_valid(self):
         v = hmac_sha256(self.shared_secret_expended[32:64], self.secret[:32] + self.secret[64:])
         return v == self.secret[32:64]
     
-    def _generate_keys(self):
+    def _generate_keys(self, mkey):
+        """
+        start to generate authentication keys, and allowing to set the
+        mac_key value in case exists
+        """
         self.private = curve25519.Private()
         self.public  = self.private.get_public()
+        self.mac_key = mkey
+
+    @property
+    def ready(self):
+        return self._ready.is_set()
 
     @property
     def public_b64(self):

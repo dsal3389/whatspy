@@ -1,8 +1,7 @@
 import re
 import functools
-import logging
 
-log = logging.getLogger(__name__)
+from .manager import EventsManager
 
 
 class MessageEvents:

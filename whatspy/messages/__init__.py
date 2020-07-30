@@ -19,7 +19,7 @@ def init_message(client_id):
         'admin',
         'init',
         [2, 2029, 4],
-        ['Windows', 'Chrome', '10'],
+        ['Bot', '', '1.0'],
         client_id,
         True
     ]
@@ -40,18 +40,35 @@ def restore_session(token, server_token, client_id):
     payload = [
         'admin',
         'login',
-        str(token, 'utf-8'),
-        str(server_token, 'utf-8'),
+        token,
+        server_token,
         client_id,
         'takeover'
     ]
     return (MessageTags.TIME, payload)
 
 def disconnect_session():
-    tag = lambda : 'goodbye,'
     payload = [
         'admin',
         'Conn',
         'disconnect'
     ]
-    return (tag, payload)
+    return ('goodbye,', payload)
+
+def challenge_response(challenge, server_token, client_id):
+    payload = [
+        'admin',
+        'challenge',
+        challenge, 
+        server_token,
+        client_id
+    ]
+    return (MessageTags.TIME, payload)
+
+def remember_me(state):
+    payload = [
+        'admin',
+        'remember',
+        state
+    ]
+    return (MessageTags.TIME, payload)

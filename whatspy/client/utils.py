@@ -18,4 +18,3 @@ def remove_qr():
 
     if os.path.exists(path):
         os.remove(path)
-

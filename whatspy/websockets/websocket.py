@@ -33,6 +33,7 @@ class WhatsappWebsocket(object):
     the client is the one who is sending data so the client will interact with the websocket
     but the websocket wont interract with the client, the manager will 
     """
+
     def __init__(self, client, uri="wss://web.whatsapp.com/ws", origin="https://web.whatsapp.com"):
         self.uri = uri
         self.origin  = origin
@@ -91,13 +92,12 @@ class WhatsappWebsocket(object):
 
     async def keep_connection_alive(self):
         while not self.closed.is_set():
-            try: # if no message recv the next 25 sec send a dummy message to keep it alive
+            try: # if no message recv the next 25 sec send a dummy message to keep the connection alive
                 await asyncio.wait_for(
                     asyncio.shield(self.recv), 25, loop=self.loop
                 )
             except asyncio.TimeoutError:
                 await self.socket.send('?,,')
-
 
     def __await__(self):
         return self.connect().__await__()
